@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.js"></script>
+        <script src="https://unpkg.com/vue-router@3/dist/vue-router.js"></script>
+    </head>
+    <body>
+        <div id="root"></div>
+        <script>
+            Vue.use(VueRouter);
+            const routes = [
+                { path:'/A', component:{ template:`<div>我是 A页面 </div>` } },
+                { path:'/B', component:{ template:`<div>我是 B页面 </div>` } }
+            ];
+            const router = new VueRouter({  routes });
+            new Vue({
+                router,
+                template:`
+                    <div>
+                        Hello，Vue2
+                        <button 
+                            @click="$router.push($route.fullPath === '/A'?'/B':'/A')"
+                        >切换</button>
+                        <router-view />
+                    </div>
+                `
+            }).$mount('#root')
+        </script>
+    </body>
+</html>
