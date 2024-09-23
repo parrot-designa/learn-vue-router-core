@@ -89,7 +89,7 @@
 前端路由存在以下几点优势：
 
 1. 改变 URL，但是界面无需重新加载。可以不用刷新浏览器就可以改变网页内容，用户体验大大提高。
-2. 前端渲染把渲染的任务交给了浏览器，通过客户端来解决页面的构建，这个很大程度上缓解了服务端的压力。而且配合前端路由，无缝的页面切换体验自然是对用户友好的。
+2. 前端渲染把渲染的任务交给了浏览器，通过客户端来解决页面的构建，这个很大程度上缓解了服务端的压力。
 
 
 # 二、前端路由的基本原理
@@ -122,7 +122,7 @@ history 路由模式是监听 url 路径变化，需要客户端和服务端支�
 
 ```改变 URL 中的 hash部分不会引起页面刷新```。
 
-```hash​​​的改变会通过触发​​hashchange​​​事件监听​​URL​​​的变化，来执行相对于的操作来渲染页面```。
+```hash​​​的改变会通过触发​​hashchange​​​事件监听​​URL​​​的变化，可以用来执行相对于的操作来渲染页面```。
 
 通过浏览器前进后退改变​​URL​​​、通过标签改变​​URL​​​、通过​​window.location​​​改变​​URL​​​，这几种情况改变​​URL​​​都会触发​​hashchange​​事件。
 
@@ -206,3 +206,72 @@ window.addEventListener("hashchange",function(e){
 3. 新开一个 tab 页也会在堆栈上保存。
 
 ## 2.3 history路由实现原理
+
+hash模式的核心是 路由上 hash 变化，不会重新刷新页面。
+
+而 history 模式借助的是 ```window.history API```来实现修改 URL，使用 history 改变 URL 不会引起页面刷新。
+
+### 2.3.1 history API && 监听popstate事件
+
+history 提供的一些方法可以操作当前网页在浏览器的会话历史纪录中的位置。
+
+我们前面说到的 ```history.length``` 就是可以查询会话历史记录的大小。
+
+下面列举一下常用的 history API：
+ 
+1. back() : 后退到浏览器上一次的会话历史
+2. forward() : 前进到浏览器下一次的会话历史
+3. go(number) : 转到指定某一次浏览器会话历史，正数为前进，负数为后退；
+4. pushState（state,title,url）：前进到指定URL，会将URL数据push进会话历史中；
+5. replaceState（state,title,url）：将URL替换当前路径；
+
+```js
+window.history.pushState({state:"start"},'测试',"/pushStateUrl")
+```
+
+popstate类似于一个事件函数。
+
+当用户在浏览器点击后退、前进，或者在js中调用histroy.back()，history.go()，history.forward()等，会触发popstate事件。
+ 
+但pushState、replaceState不会触发这个事件。 
+
+```js
+window.addEventListener("popstate",function(e){
+    console.log("监听 会话历史记录 变化",e)
+})
+```
+
+上面的几种 history API 只会修改当前页面的URL，并不会发送请求。
+
+但是如果你刷新浏览器，就会向浏览器发发送 http 网页请求，因此如果使用 history 路由模式，需要服务端配置。
+
+### 2.3.2 为什么 history 路由需要配置
+ 
+history路由（不含哈希部分的 URL，基于 HTML5 History API）和哈希路由之间的主要区别在于 ```URL 结构```和```浏览器行为```。
+
+哈希路由之所以不需要额外的服务器配置，是因为它使用 URL 中的哈希部分（#）来管理路由，而这部分不会被发送到服务器。
+
+相反，哈希路由只在客户端中进行路由切换，服务器只处理应用的入口点（通常是 index.html）的请求。
+
+当用户刷新包含 history 路由的页面时，浏览器将向服务器发送带有特定路由路径的请求。
+
+服务器必须能够映射这些请求到应用的入口点，以便前端路由可以重新渲染正确的视图。
+
+这需要服务器配置来确保这种映射和处理。
+
+```js
+// 一般在部署前端应用时 通常会使用 nginx 
+server {
+    listen 9000;
+    server_name localhost;
+
+    location / {
+        root html;
+        index index.html index.htm;
+    }
+}
+```
+
+## 2.4 hash模式与 history模式的区别
+
+* hash 模式较丑，history 模式较优雅
