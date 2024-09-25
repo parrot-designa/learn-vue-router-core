@@ -78,11 +78,15 @@
 
 而在单页应用中，初始页面的加载只发生一次。
 
-既然只加载一次，那么后续如何实现输入不同的路径就可以出现不同的内容呢？
+既然只加载一次，那么后续如何实现在浏览器中输入不同的路径就可以出现不同的内容呢？
 
-路由是指根据URL来选择执行特定的代码逻辑。
+这里就需要前端路由进行参与。 
 
-大家发现可以监听路由的变化，通过 Javascript 等技术可以实现在用户与应用交互时，只更新页面的部分内容。后来在大家广泛实践运用下，这种监听路由变更页面的方式被统称为“```前端路由```”。
+现代浏览器提供一些 API, 如 ```hashchange、popstate```可以用来监听路由的变化。
+
+通过 Javascript 等技术可以实现在用户与应用交互时，只更新页面的部分内容。 
+
+```“前端路由”可以根据URL来选择执行特定的代码逻辑。```
 
 单页应用是前端开发的一个革新。 
 
@@ -102,13 +106,15 @@
 
 ## 2.1 hash（哈希）模式和history模式
 
-一般前端路由实现分为两种，hash 和 history，他们都可以做到更改路由但是不会引起页面刷新。
+一般前端路由实现分为两种：```hash 和 history```。
+
+他们都可以做到更改路由但是不会引起页面刷新。
 
 可以说前端路由框架如 ```vue-router```、```react-router``` 就是基于这两个 API进行封装的。
 
 区分 hash 和 history 路由的方式就是看地址栏 URL 上是否带有#，#代表是 hash 模式，没有的话就是 history 模式。
 
-hash 路由模式通过监听url中 hash 变化渲染不同的内容，它不会向服务器发送请求。
+hash 路由模式通过监听 url 中 hash 变化渲染不同的内容，它不会向服务器发送请求。
 
 history 路由模式是监听 url 路径变化，需要客户端和服务端支持。
 
@@ -116,13 +122,13 @@ history 路由模式是监听 url 路径变化，需要客户端和服务端支�
 
 ### 2.2.1 URL的哈希部分 & 监听hashchange事件
 
-在URL中，​hash​是 ​# ​​​及后面的那部分。
+在URL中，```​hash​是 ​# ​​​及后面的那部分```。
 
 例如，在http://example.com/#/home中，#/home就是哈希部分。
 
 ```改变 URL 中的 hash部分不会引起页面刷新```。
 
-```hash​​​的改变会通过触发​​hashchange​​​事件监听​​URL​​​的变化，可以用来执行相对于的操作来渲染页面```。
+```hash​​​的改变会通过触发​​hashchange​​​事件监听​​URL​​​的变化```，可以用来执行相对于的操作来渲染页面。
 
 通过浏览器前进后退改变​​URL​​​、通过标签改变​​URL​​​、通过​​window.location​​​改变​​URL​​​，这几种情况改变​​URL​​​都会触发​​hashchange​​事件。
 
@@ -274,4 +280,137 @@ server {
 
 ## 2.4 hash模式与 history模式的区别
 
-* hash 模式较丑，history 模式较优雅
+1. hash 模式较丑，history 模式较优雅
+
+* 在使用hash模式时，URL中会包含一个#符号，这通常用来表示页面内的锚点定位。许多人认为这样的URL不够“漂亮。
+
+```js
+http://example.com/#/home
+``` 
+
+* 相比之下，使用history模式时，URL看起来就像是普通的HTTP请求一样，没有任何特殊标记。这样的URL更加直观，看起来就像一个标准的网页链接。由于没有#符号的存在，很多人会觉得这样的URL更加简洁、专业和优雅。
+
+```js
+http://example.com/home
+```
+
+2. pushState设置的新URL可以是与当前URL同源的任意URL；而hash只可修改#后面的部分，故只可设置与当前同文档的URL。
+
+3. pushState设置的新URL可以与当前URL一模一样，这样也会把记录添加到栈中；而hash设置的新值必须与原来不一样才会触发记录添加到栈中;
+
+4. pushState通过stateObject可以添加任意类型的数据到记录中；而hash只可添加短字符串;
+
+5. pushState可额外设置title属性供后续使用;
+
+6. hash兼容IE8以上，history兼容IE10以上;
+
+7. history模式需要后端配合将所有访问都指向index.html，否则用户刷新页面，会导致404错误。
+
+# 三、手写 VueRouter 构造函数
+
+在开发一个vue2项目时，我们往往会先实例化一个router对象。
+
+而实例化 router对象的 构造函数就是 ```VueRouter```。
+
+```js
+const router = new VueRouter()
+```
+
+## 3.1 构造函数属性```mode```
+
+mode属性用于指定路由的工作模式。
+
+这个属性决定了你的应用如何管理和操作浏览器的历史记录，以及如何构建 URL。
+
+```mode的默认属性为 hash。```
+
+```js
+// 下面这两种写法一致
+const router = new VueRouter();
+const router = new VueRouter({ mode:"hash" });
+```
+
+所以我们很容易写出下面这段代码：
+
+```js
+export default class VueRouter{
+
+    mode;
+
+    // options 空默认值代表空
+    constructor(options = {}){
+        let mode = options.mode || 'hash';
+
+        this.mode = mode;
+    }
+}
+```
+
+## 3.2 Hash模式下初始化时给路由添加 hash 符号
+
+我们在初始化构造函数的时候会发现 hash 路由 已经生效了。
+
+如你在地址栏上输入：```http://example.com```。
+
+会自动加上```#```。
+
+变成下面这种形式：```http://example.com/#/```
+
+这种现象是因为 Vue Router 默认会为你的应用提供一个默认的```首页路由```。
+
+这是因为 Vue Router 在初始化时会检查当前的 URL 是否包含 # 符号，并根据 # 后面的内容来确定当前的路由位置。
+
+如果没有指定任何路径，默认情况下，它会将 # 加到 URL 的末尾，并指向你定义的默认路由（通常是首页）。
+
+## 3.3 hash 路由是如何在初始化时在路径上增加#的呢？
+
+### 3.3.1 getHash
+
+```js
+export function getHash () { 
+  let href = window.location.href
+  const index = href.indexOf('#')
+  if (index < 0) return ''
+
+  href = href.slice(index + 1)
+
+  return href
+}
+```
+
+上面这段代码首先获取当前页面的完整 URL，然后查找 # 的位置。
+
+如果没有找到 #，说明当前 URL 没有 hash 部分，函数返回空字符串。
+
+如果有 #，则截取从 # 后面开始的字符串作为 hash 部分并返回。
+
+可以很轻松的看出这个函数是为了```获取 URL 中的 hash ```部分。
+
+那么为什么不直接使用 ```location.hash``` 呢？
+
+有下面这几个因素影响：
+
+1. ```解码差异```：不同浏览器对 hash 的处理可能有所不同。例如，在某些浏览器（如 Firefox）中，window.location.hash 返回的字符串已经被解码（即转换成了 Unicode 字符）。而在其他浏览器中，它可能仍然包含编码后的字符（如 %20 代表空格）
+2. ```一致性```：为了保证跨浏览器的一致性，手动提取 hash 部分可以确保始终得到原始的、未解码的字符串。这样可以避免在处理 hash 值时出现意外的行为或错误。
+3. ```控制力更强```：通过手动从 href 中截取 hash 部分，可以更精确地控制如何处理这部分数据。例如，您可以选择是否要对其进行解码，或者如何处理解码过程中的异常字符。
+
+### 3.3.2 使用 pushState 来更改路由
+
+```js
+constructor(){
+    // ......
+    switch(mode){
+        case 'hash':
+            // 在路由上增加 hash 的逻辑
+            const path = getHash();
+            // 如果没有 hash 则添加 hash
+            if(path === ''){
+                window.history.pushState({ key:'' }, '', '/#/')
+            }
+            break
+        default:
+            throw newError("请指定路由模式")
+    }
+}
+
+```
